@@ -206,7 +206,7 @@ export const LAYOUT = {
     rotorZ: -215,     // in X carriage coordinates
     rotorY: 246,
     gearTopY: 160,
-    rubyY: 150,
+    rubyY: 160,          // probe-contact plane; samples ride on the gear face
     scanCenterS: 17.5,
     xCarriageOriginZ: 35,
     xCoarseMeasurement: 60,

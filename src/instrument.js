@@ -1305,10 +1305,12 @@ export function createInstrument(materials, opts = {}) {
     stylusExpl.add(stylusMotion);
     {
       const collet = cylinder(4.6, 4.6, 9, materials.steelDark, stylusMotion, [0, -45.5, 0], 20);
-      const rod = cylinder(1.5, 1.5, 44.5, materials.tungsten, stylusMotion, [0, -68.25, 0], 20, null, null, 'TungstenStylus');
-      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -92.2, 0], 18);
-      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -96, 0], 32, 'RubyProbe');
-      // Ruby centre sits at local y=-96 => world y鈮?50, nesting in a tooth gap.
+      const rod = cylinder(1.5, 1.5, 32.8, materials.tungsten, stylusMotion, [0, -62.4, 0], 20, null, null, 'TungstenStylus');
+      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -80.5, 0], 18);
+      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -84.3, 0], 32, 'RubyProbe');
+      // Ruby centre sits at local y=-84.3 => world y=161.7. Its lower pole
+      // touches the gear top at y=160, so the ruby can no longer sink into the
+      // closed teaching-model gear face.
       register('ruby', ruby);
       bindAnchor('ruby', ruby);
       transferAnchors.ruby = ruby;
