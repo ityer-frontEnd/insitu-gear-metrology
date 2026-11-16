@@ -2491,20 +2491,20 @@ function createInstrument(materials, opts = {}) {
     micro.position.set(0, 296, -238);
     micro.rotation.set(0, 0, Math.PI / 2);
     assembly.add(micro);
-    const arm = box(20, 129, 30, materials.aluminum, slider, [0, 215, -238], 2, 2);
+    const arm = box(20, 112, 30, materials.aluminum, slider, [0, 223.5, -238], 2, 2);
     box(2, 104, 22, materials.machined, slider, [10.2, 222, -238], 0.4, 1);
     addLinearTicks(slider, {
-      length: 100,
+      length: 96,
       count: 20,
-      origin: [10.8, 166, -228],
+      origin: [10.8, 172, -228],
       axis: "y",
       normal: "x",
       majorEvery: 5,
       opacity: 0.35
     });
     box(28, 24, 36, materials.aluminumDark, slider, [0, 281, -238], 1.8, 2);
-    cylinder(9, 9, 17, materials.steelDark, slider, [0, 156, -238], 20);
-    cylinder(8.2, 8.2, 7, materials.brass, slider, [0, 164, -238], 24);
+    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
+    cylinder(8.2, 8.2, 6, materials.brass, slider, [0, 169, -238], 24);
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, "LocatorBallA");
     bindAnchor("ballA", ball);
     register("ballA", slider);
@@ -2523,7 +2523,8 @@ function createInstrument(materials, opts = {}) {
     assembly.add(slider);
     box(18, 8, 22, materials.steelDark, slider, [0, 249, -238], 1.2, 2);
     box(20, 40, 28, materials.aluminum, slider, [0, 222, -238], 1.8, 2);
-    cylinder(9, 9, 16, materials.steelDark, slider, [0, 158, -238], 20);
+    cylinder(3.2, 3.2, 36, materials.steel, slider, [0, 185, -238], 16);
+    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, "LocatorBallB");
     const springGroup = new THREE4.Group();
     springGroup.position.set(0, 266, -222);
@@ -2708,11 +2709,10 @@ function createInstrument(materials, opts = {}) {
     const pinion = new THREE4.Group();
     const gearData = createSimpleGearGeometry(40, 0.5, 7);
     const pinionMesh = new THREE4.Mesh(gearData.geo, materials.polishedSteel);
-    pinionMesh.rotation.x = Math.PI / 2;
     pinionMesh.castShadow = true;
     pinion.add(pinionMesh);
     cylinder(5, 5, 19, materials.steel, pinion, [0, 0, 0], 20);
-    pinion.position.set(68, 241, -242);
+    pinion.position.set(68, 239.5, -242);
     headGroup.add(pinion);
     motion.rackPinion = pinion;
     const diff = createMicrometerHead(materials, knurlMat, { scale: 0.55 });
@@ -2720,6 +2720,9 @@ function createInstrument(materials, opts = {}) {
     diff.rotation.x = 0;
     headGroup.add(diff);
     motion.reversalKnob = diff.userData.thimble;
+    box(42, 8, 16, materials.aluminum, headGroup, [47, 280, -230], 1.5, 2);
+    box(8, 20, 10, materials.aluminumDark, headGroup, [68, 270, -230], 1.2, 2);
+    box(8, 6, 14, materials.aluminumDark, headGroup, [68, 260, -236], 1.1, 2);
     addSmallDisplayLabel(headGroup, [
       { text: "m 0.5  /  Z 40", size: 28, color: "rgba(206,220,229,.52)" },
       { text: "M4 DIFFERENTIAL", size: 16, color: "rgba(155,175,189,.33)" }
@@ -2847,8 +2850,8 @@ function createInstrument(materials, opts = {}) {
     stylusExpl.add(stylusMotion);
     {
       const collet = cylinder(4.6, 4.6, 9, materials.steelDark, stylusMotion, [0, -45.5, 0], 20);
-      const rod = cylinder(1.5, 1.5, 49, materials.tungsten, stylusMotion, [0, -70.5, 0], 20, null, null, "TungstenStylus");
-      const neck = cylinder(2.2, 1.2, 5, materials.tungsten, stylusMotion, [0, -94, 0], 18);
+      const rod = cylinder(1.5, 1.5, 44.5, materials.tungsten, stylusMotion, [0, -68.25, 0], 20, null, null, "TungstenStylus");
+      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -92.2, 0], 18);
       const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -96, 0], 32, "RubyProbe");
       register("ruby", ruby);
       bindAnchor("ruby", ruby);
