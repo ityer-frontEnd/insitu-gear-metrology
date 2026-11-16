@@ -1444,9 +1444,12 @@ export function createInstrument(materials, opts = {}) {
     const pinTarget = lockPinned ? 8 : 20.5;
     motion.lockPin.position.y += (pinTarget - motion.lockPin.position.y) * 0.18;
     motion.lockPin.visible = true;
-    // Dual locating balls.
+    // Dual locating balls. The visual gear has a closed top face, so stop the
+    // ball centres at the tooth-top datum instead of letting the spheres sink
+    // through the solid teaching model. At full drop the ball is tangent to
+    // the gear face (centre 168, radius 8).
     const drop = clamp(ballDrop, 0, 1);
-    const ballY = lerp(182, 150, drop);
+    const ballY = lerp(182, 168, drop);
     ballA.slider.position.y = ballY - 150;
     ballB.slider.position.y = ballY - 150;
     const compression = 1 - 0.13 * drop - clamp((forceN - 0.1) / 0.4, 0, 1) * 0.035;
