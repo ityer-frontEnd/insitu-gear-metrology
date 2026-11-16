@@ -11,6 +11,10 @@ const TOOTH_CENTERS_DEG = Array.from({ length: 8 }, (_, i) => -26.0 + i * PITCH_
 // The two locator balls (±129.44 mm) land in the adjacent teeth gaps.
 const GAP_ALIGN_DEG = (TOOTH_CENTERS_DEG[6] + TOOTH_CENTERS_DEG[7]) / 2; // -2.122°
 const TOOTH_CENTERS = TOOTH_CENTERS_DEG.map(d => d * DEG);
+// Open the visual tooth spaces enough for the φ16 locating balls to enter the
+// real slots. The 3D gear is a coarse teaching sector, not the 98-tooth
+// production gear, so a small angular relief is needed for a believable seat.
+const TOOTH_ANGULAR_SCALE = 0.933;
 
 function topSurface(r0, r1, a0, a1, y, segments, material) {
   const nA = Math.max(2, segments);
@@ -131,7 +135,7 @@ function makeToothHalfGeometry(sign, yMin, yMax, layers = 10) {
     const twist = sign * (y - midY) * tangent;
     for (let p = 0; p < nP; p++) {
       const { r, a } = profile[p];
-      const angle = a + twist;
+      const angle = a * TOOTH_ANGULAR_SCALE + twist;
       pos.push(Math.sin(angle) * r, y, Math.cos(angle) * r);
     }
   }
@@ -494,7 +498,12 @@ export function createGear(materials, contactWorld, instrumentYaw) {
   const cx = contactWorld.x - outward.x * Rcontact;
   const cz = contactWorld.z - outward.y * Rcontact;
   group.position.set(cx, 0, cz);
-  group.rotation.y = instrumentYaw - GAP_ALIGN_DEG * DEG;
+  // The herringbone teeth twist by roughly 1° between the mid-plane and the
+  // probe contact height. Align the slot at the actual contact height so the
+  // ball/probe column passes between the flanks instead of under a tooth cap.
+  const contactHelix = (LAYOUT.instrument.rubyY - 80) *
+    Math.tan(CFG.gear.beta) / LAYOUT.gear.pitchR;
+  group.rotation.y = instrumentYaw - GAP_ALIGN_DEG * DEG - contactHelix;
 
   // Anchor used by engineering callouts and exploded labels.
   const gapA = GAP_ALIGN_DEG * DEG;

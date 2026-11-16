@@ -245,8 +245,8 @@ var init_config = __esm({
         // in X carriage coordinates
         rotorY: 246,
         gearTopY: 160,
-        rubyY: 160,
-        // probe-contact plane; samples ride on the gear face
+        rubyY: 150,
+        // probe centre inside the real tooth slot
         scanCenterS: 17.5,
         xCarriageOriginZ: 35,
         xCoarseMeasurement: 60,
@@ -2504,7 +2504,7 @@ function createInstrument(materials, opts = {}) {
       opacity: 0.35
     });
     box(28, 24, 36, materials.aluminumDark, slider, [0, 281, -238], 1.8, 2);
-    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
+    cylinder(8.2, 8.2, 10, materials.steelDark, slider, [0, 163, -238], 20);
     cylinder(8.2, 8.2, 6, materials.brass, slider, [0, 169, -238], 24);
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, "LocatorBallA");
     bindAnchor("ballA", ball);
@@ -2525,7 +2525,7 @@ function createInstrument(materials, opts = {}) {
     box(18, 8, 22, materials.steelDark, slider, [0, 249, -238], 1.2, 2);
     box(20, 40, 28, materials.aluminum, slider, [0, 222, -238], 1.8, 2);
     cylinder(3.2, 3.2, 36, materials.steel, slider, [0, 185, -238], 16);
-    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
+    cylinder(8.2, 8.2, 10, materials.steelDark, slider, [0, 163, -238], 20);
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, "LocatorBallB");
     const springGroup = new THREE4.Group();
     springGroup.position.set(0, 266, -222);
@@ -2851,9 +2851,9 @@ function createInstrument(materials, opts = {}) {
     stylusExpl.add(stylusMotion);
     {
       const collet = cylinder(4.6, 4.6, 9, materials.steelDark, stylusMotion, [0, -45.5, 0], 20);
-      const rod = cylinder(1.5, 1.5, 32.8, materials.tungsten, stylusMotion, [0, -62.4, 0], 20, null, null, "TungstenStylus");
-      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -80.5, 0], 18);
-      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -84.3, 0], 32, "RubyProbe");
+      const rod = cylinder(1.5, 1.5, 44.5, materials.tungsten, stylusMotion, [0, -68.25, 0], 20, null, null, "TungstenStylus");
+      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -92.2, 0], 18);
+      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -96, 0], 32, "RubyProbe");
       register("ruby", ruby);
       bindAnchor("ruby", ruby);
       transferAnchors.ruby = ruby;
@@ -2979,7 +2979,7 @@ function createInstrument(materials, opts = {}) {
     motion.lockPin.position.y += (pinTarget - motion.lockPin.position.y) * 0.18;
     motion.lockPin.visible = true;
     const drop = clamp(ballDrop, 0, 1);
-    const ballY = lerp(182, 168, drop);
+    const ballY = lerp(182, 150, drop);
     ballA.slider.position.y = ballY - 150;
     ballB.slider.position.y = ballY - 150;
     const compression = 1 - 0.13 * drop - clamp((forceN - 0.1) / 0.4, 0, 1) * 0.035;
@@ -3187,7 +3187,7 @@ function makeToothHalfGeometry(sign, yMin, yMax, layers = 10) {
     const twist = sign * (y - midY) * tangent;
     for (let p = 0; p < nP; p++) {
       const { r, a } = profile[p];
-      const angle = a + twist;
+      const angle = a * TOOTH_ANGULAR_SCALE + twist;
       pos.push(Math.sin(angle) * r, y, Math.cos(angle) * r);
     }
   }
@@ -3567,7 +3567,8 @@ function createGear(materials, contactWorld, instrumentYaw) {
   const cx = contactWorld.x - outward.x * Rcontact;
   const cz = contactWorld.z - outward.y * Rcontact;
   group.position.set(cx, 0, cz);
-  group.rotation.y = instrumentYaw - GAP_ALIGN_DEG * DEG;
+  const contactHelix = (LAYOUT.instrument.rubyY - 80) * Math.tan(CFG.gear.beta) / LAYOUT.gear.pitchR;
+  group.rotation.y = instrumentYaw - GAP_ALIGN_DEG * DEG - contactHelix;
   const gapA = GAP_ALIGN_DEG * DEG;
   const anchor = new THREE5.Object3D();
   anchor.position.set(Math.sin(gapA) * 2020, yTop + 3, Math.cos(gapA) * 2020);
@@ -3614,7 +3615,7 @@ function createGear(materials, contactWorld, instrumentYaw) {
     bodyMeshes: [web]
   };
 }
-var PITCH_DEG, TOOTH_CENTERS_DEG, GAP_ALIGN_DEG, TOOTH_CENTERS;
+var PITCH_DEG, TOOTH_CENTERS_DEG, GAP_ALIGN_DEG, TOOTH_CENTERS, TOOTH_ANGULAR_SCALE;
 var init_gear = __esm({
   "src/gear.js"() {
     init_config();
@@ -3623,6 +3624,7 @@ var init_gear = __esm({
     TOOTH_CENTERS_DEG = Array.from({ length: 8 }, (_, i) => -26 + i * PITCH_DEG);
     GAP_ALIGN_DEG = (TOOTH_CENTERS_DEG[6] + TOOTH_CENTERS_DEG[7]) / 2;
     TOOTH_CENTERS = TOOTH_CENTERS_DEG.map((d) => d * DEG);
+    TOOTH_ANGULAR_SCALE = 0.933;
   }
 });
 

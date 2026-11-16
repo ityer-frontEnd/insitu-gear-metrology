@@ -916,7 +916,7 @@ export function createInstrument(materials, opts = {}) {
     });
     // clamp collar and M4 threaded ball seat
     box(28, 24, 36, materials.aluminumDark, slider, [0, 281, -238], 1.8, 2);
-    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
+    cylinder(8.2, 8.2, 10, materials.steelDark, slider, [0, 163, -238], 20);
     cylinder(8.2, 8.2, 6, materials.brass, slider, [0, 169, -238], 24);
     // locating sphere (polished, mirror), tangent to the seat above
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, 'LocatorBallA');
@@ -942,7 +942,7 @@ export function createInstrument(materials, opts = {}) {
     // The B carriage is shorter than A's; this shaft closes the 34 mm gap
     // between the sliding arm and the ball seat so B is visibly mounted.
     cylinder(3.2, 3.2, 36, materials.steel, slider, [0, 185, -238], 16);
-    cylinder(9, 9, 10, materials.steelDark, slider, [0, 163, -238], 20);
+    cylinder(8.2, 8.2, 10, materials.steelDark, slider, [0, 163, -238], 20);
     const ball = sphere(8, materials.chrome, slider, [0, 150, -238], 32, 'LocatorBallB');
     // B preload spring: anchored at the top, compresses as B follows the groove.
     const springGroup = new THREE.Group();
@@ -1305,12 +1305,12 @@ export function createInstrument(materials, opts = {}) {
     stylusExpl.add(stylusMotion);
     {
       const collet = cylinder(4.6, 4.6, 9, materials.steelDark, stylusMotion, [0, -45.5, 0], 20);
-      const rod = cylinder(1.5, 1.5, 32.8, materials.tungsten, stylusMotion, [0, -62.4, 0], 20, null, null, 'TungstenStylus');
-      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -80.5, 0], 18);
-      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -84.3, 0], 32, 'RubyProbe');
-      // Ruby centre sits at local y=-84.3 => world y=161.7. Its lower pole
-      // touches the gear top at y=160, so the ruby can no longer sink into the
-      // closed teaching-model gear face.
+      const rod = cylinder(1.5, 1.5, 44.5, materials.tungsten, stylusMotion, [0, -68.25, 0], 20, null, null, 'TungstenStylus');
+      const neck = cylinder(2.2, 1.2, 4.2, materials.tungsten, stylusMotion, [0, -92.2, 0], 18);
+      const ruby = sphere(1.7, materials.ruby, stylusMotion, [0, -96, 0], 32, 'RubyProbe');
+      // Ruby centre sits at local y=-96 => world y=150, inside the real slot
+      // opened between the visual tooth flanks. The neck ends at the sphere's
+      // north pole; the ruby itself remains fully exposed.
       register('ruby', ruby);
       bindAnchor('ruby', ruby);
       transferAnchors.ruby = ruby;
@@ -1451,7 +1451,7 @@ export function createInstrument(materials, opts = {}) {
     // through the solid teaching model. At full drop the ball is tangent to
     // the gear face (centre 168, radius 8).
     const drop = clamp(ballDrop, 0, 1);
-    const ballY = lerp(182, 168, drop);
+    const ballY = lerp(182, 150, drop);
     ballA.slider.position.y = ballY - 150;
     ballB.slider.position.y = ballY - 150;
     const compression = 1 - 0.13 * drop - clamp((forceN - 0.1) / 0.4, 0, 1) * 0.035;
