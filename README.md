@@ -2,12 +2,14 @@
 
 交互式 WebGL 展陈页。场景单位为毫米，机械运动、采样读数、误差链与界面标注使用同一套配置（`src/config.js`）；Three.js 为本地固定版本，页面不访问外部网络。
 
+**在线预览：<https://ityer-frontend.github.io/insitu-gear-metrology/>**
+
 ## 启动
 
-不要直接双击 `index.html`（ES Module 与 import map 在 `file://` 下会被浏览器拦截）。在项目目录启动任意静态服务器：
+不要直接双击 `index.html`（ES Module 与 import map 在 `file://` 下会被浏览器拦截）。在仓库目录启动任意静态服务器：
 
 ```powershell
-cd D:\deepharness\insitu-gear-metrology
+cd insitu-gear-metrology
 python -m http.server 8765 --bind 127.0.0.1
 ```
 
@@ -27,7 +29,7 @@ python -m http.server 8765 --bind 127.0.0.1
 - `src/`：可维护源码。`build.mjs` 会将 CSS/JS 注入模板，生成根目录 `index.html`。
 - 重新构建：
   ```powershell
-  & 'D:\deepharness\node_modules\@esbuild\win32-x64\esbuild.exe' src/main.js --bundle --format=esm --external:three --external:'three/addons/*' --outfile=src/app.bundle.js
+  npx esbuild src/main.js --bundle --format=esm --external:three --external:'three/addons/*' --outfile=src/app.bundle.js
   node build.mjs
   ```
 
