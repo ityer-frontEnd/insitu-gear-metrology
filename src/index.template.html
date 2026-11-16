@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#F4F6F9" />
+<meta name="description" content="IN-SITU / 大型齿轮渐开线齿形误差在位测量仪 · 机械子系统 · 实时 3D 交互实验室" />
+<title>IN-SITU / 大齿轮齿形在位测量</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23F4F6F9'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%230E7490' stroke-opacity='.65'/%3E%3Cpath d='M18 44V25h8M46 20v19h-8' fill='none' stroke='%231F2937' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23A94B0B'/%3E%3C/svg%3E" />
+<style>
+/*__CSS__*/
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app" class="app" data-fsm="idle" data-face="left">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 44 44" fill="none">
+          <circle class="bm-ring" cx="22" cy="22" r="18.4"/>
+          <path class="bm-involute" d="M9.5 29.5c4.5-.5 7.7-3.3 9.3-7.3 1.2-3.1 3.3-5.8 6.9-7.7"/>
+          <path class="bm-l" d="M15 13.5v17h15"/>
+          <circle class="bm-dot" cx="30.5" cy="30.5" r="2.1"/>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div class="brand-main"><span class="brand-latin">IN-SITU</span><span class="brand-div">/</span><span class="brand-cn">大齿轮齿形在位测量</span></div>
+        <div class="brand-sub">双球定基准，切线扫齿形<span class="brand-code">MS-04</span></div>
+      </div>
+    </div>
+
+    <div class="project-id">
+      <span class="project-cn">大型齿轮渐开线齿形误差在位测量仪</span>
+      <span class="project-en">IN-SITU GEAR PROFILE METROLOGY · MECHANICAL SUBSYSTEM</span>
+    </div>
+
+    <div class="top-actions">
+      <div class="top-status" id="topStatus" data-tone="idle">
+        <i></i><span id="topStatusText">待机</span>
+      </div>
+      <label class="quality">
+        <span>画质</span>
+        <select id="qualitySelect" aria-label="画质模式">
+          <option value="auto">自动</option>
+          <option value="high">高画质</option>
+          <option value="smooth">流畅</option>
+        </select>
+      </label>
+      <button id="labelToggle" class="icon-btn label-toggle" type="button" aria-pressed="true" title="工程标注开关">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h8.5M4 10h6M4 14.5h8.5"/><circle cx="15.2" cy="6" r="1.3"/><path d="M15.2 9v5.2h2.1"/></svg>
+      </button>
+      <button id="soundToggle" class="icon-btn" type="button" aria-pressed="false" title="声音（默认静音）">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 8v4h3l4 3V5L7 8H4Z"/><path class="slash" d="M13 8.5l3 3m0-3l-3 3"/></svg>
+      </button>
+      <label class="volume-wrap" id="volumeWrap" title="音量">
+        <span>VOL</span>
+        <input id="volumeRange" type="range" min="0" max="1" step="0.01" value="0.36" aria-label="音量" />
+      </label>
+      <button id="helpButton" class="icon-btn help-btn" type="button" title="帮助与快捷键">
+        <span>?</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="stage" id="stage" aria-label="大型齿轮与在位测量仪实时三维场景">
+      <div id="canvasHost" class="canvas-host"></div>
+      <div class="stage-vignette" aria-hidden="true"></div>
+      <div class="stage-grain" aria-hidden="true"></div>
+
+      <div class="workpiece-card">
+        <div class="eyebrow"><span class="eyebrow-dot"></span><span>WORKPIECE / 01</span><span class="dim">IN-SITU</span></div>
+        <div class="wp-title"><span>Φ</span><strong>4200</strong><em>mm</em></div>
+        <div class="wp-meta"><span>人字齿轮扇段</span><span>Z 98</span><span>mn 8</span><span>β 28°21′27″</span><span class="grade">4级</span></div>
+      </div>
+
+      <div class="observation-hud">
+        <div class="obs-head"><span>OBSERVATION</span><span class="hud-signal" id="hudSignal">STANDBY</span></div>
+        <div class="obs-row"><span>扫描速度</span><strong><b id="hudSpeed">2.0</b> <em>mm/s</em></strong></div>
+        <div class="obs-row"><span>观察倍率</span><strong><b id="hudObs">1.0</b> <em>×</em></strong></div>
+        <div class="obs-row accent"><span>位移视觉放大</span><strong><b id="hudMag">500</b> <em>×</em></strong></div>
+        <p>拉伸量仅作用于三维呈现，曲线与读数使用真实值</p>
+      </div>
+
+      <nav class="camera-rail" aria-label="镜头预设">
+        <span class="rail-label">CAMERA</span>
+        <button type="button" data-view="overview" class="is-active"><b>01</b><span>全机</span></button>
+        <button type="button" data-view="positioning"><b>02</b><span>定位</span></button>
+        <button type="button" data-view="drivetrain"><b>03</b><span>传动</span></button>
+        <button type="button" data-view="transfer"><b>04</b><span>传递</span></button>
+        <button type="button" data-view="reversal"><b>05</b><span>换向</span></button>
+        <button type="button" data-view="reset" class="rail-reset" title="复位视角（R）"><b>R</b></button>
+      </nav>
+
+      <div class="label-layer" id="labelLayer" aria-hidden="true">
+        <svg class="leader-svg" id="leaderSvg"></svg>
+      </div>
+
+      <div class="micron-scale" id="micronScale" aria-hidden="true">
+        <div class="scale-top"><span>VIRTUAL SCALE / 虚像标尺</span><span>×<b id="scaleMag">500</b></span></div>
+        <div class="scale-bar">
+          <span class="scale-zero"></span>
+          <span class="scale-fill" id="scaleFill"></span>
+          <span class="scale-marker" id="scaleMarker"></span>
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="scale-bottom"><span>δ <b id="scaleDelta">0.0</b> μm <em>真实值</em></span><span id="scaleNote">视觉位移 <b>0.0</b> mm</span></div>
+      </div>
+
+      <div class="hero-statement">
+        <span class="hero-kicker">IN-SITU / LATERAL CANTILEVER</span>
+        <h2>双球定基准<br /><em>切线扫齿形</em><span class="hero-dot">。</span></h2>
+        <p>以齿槽为天然基准，抵消安装偏心；沿基圆切线展开一次微米级的测量。</p>
+        <div class="hero-metrics">
+          <span><b>U</b> ≈ 9.6 <i>μm</i></span>
+          <span><b>整机</b> 25 <i>kg</i></span>
+          <span><b>行程</b> 35 <i>mm</i></span>
+        </div>
+      </div>
+
+      <div class="mode-caption" id="modeCaption" aria-live="polite">
+        <span class="mode-eyebrow" id="modeEyebrow">EXPLODED / 05 MODULES</span>
+        <b id="modeTitle">分层爆炸视图</b>
+        <p id="modeCopy">基座 → 立柱悬臂 → Y 轴驱动 → 微位移传递 → 齿轮</p>
+      </div>
+
+      <div class="datum-live" id="datumLive" aria-live="polite">
+        <div class="datum-eyebrow"><i></i><span>DATUM / 双球定位</span><em id="datumState">入槽中</em></div>
+        <div class="datum-main"><b id="datumU">4.5</b><i>μm</i><span>定位重复性 u</span></div>
+        <div class="datum-track"><i id="datumFill"></i></div>
+        <div class="datum-meta"><span>A 固定基准</span><span>B 弹簧浮动</span><span>W 258.88</span></div>
+      </div>
+
+      <div class="stage-caption">
+        <span class="caption-index">METHOD 01</span>
+        <div><strong>基准在位</strong><span>双球定位 · 切线扫描 · 3:1 微位移传递</span></div>
+      </div>
+
+      <div class="slider-hint" id="orbitHint">拖拽旋转 · 滚轮缩放 · 点选部件</div>
+
+      <div class="cinema-layer" id="cinemaLayer" aria-hidden="true">
+        <div class="cinema-meta"><span>FILM / IN-SITU</span><span id="cinemaTime">00:00</span></div>
+        <div class="cinema-title" id="cinemaTitle">在大齿轮旁，<br />重建一微米的秩序。</div>
+        <div class="cinema-copy" id="cinemaCopy">双球定位 · 切线扫描 · 微米级误差传递</div>
+        <div class="cinema-metrics"><span>U ≈ 9.6 <em>μm</em></span><span>整机 25 <em>kg</em></span><span>齿圈 Φ4200 <em>mm</em></span></div>
+        <div class="cinema-progress"><i id="cinemaProgress"></i></div>
+      </div>
+
+      <footer class="dock" id="dock">
+        <div class="process-block">
+          <div class="process-head">
+            <span class="mini-label">MEASUREMENT SEQUENCE</span>
+            <span id="dockFace" class="dock-face">左齿面 · <b>+22.45°</b></span>
+          </div>
+          <ol class="process-steps" id="processSteps">
+            <li data-step="position"><b>01</b><span>定位</span></li>
+            <li data-step="approach"><b>02</b><span>进给</span></li>
+            <li data-step="scan"><b>03</b><span>扫描</span></li>
+            <li data-step="retract"><b>04</b><span>退回</span></li>
+            <li data-step="reverse"><b>05</b><span>换向</span></li>
+            <li data-step="done"><b>06</b><span>完成</span></li>
+          </ol>
+        </div>
+
+        <div class="transport">
+          <div class="transport-actions">
+            <button type="button" class="btn btn-primary" data-action="play" id="btnPlay">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6 4.2 13 9l-7 4.8V4.2Z"/></svg><span id="btnPlayText">启动测量</span>
+            </button>
+            <button type="button" class="btn btn-icon" data-action="pause" id="btnPause" title="暂停 / 继续（空格）">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6 4v10M12 4v10"/></svg>
+            </button>
+            <button type="button" class="btn btn-icon" data-action="reset" title="复位测量">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4.2 7.2A6 6 0 1 1 3.5 11M4.2 3.5v3.9h3.9"/></svg>
+            </button>
+          </div>
+
+          <div class="timeline">
+            <div class="timeline-head">
+              <span>扫描行程 / SCAN TRAVEL</span>
+              <span><b id="timelineRead">0.000</b><em> / 35.000 mm</em></span>
+            </div>
+            <div class="timeline-track" id="timelineTrack">
+              <div class="timeline-fill" id="timelineFill"></div>
+              <div class="timeline-samples" id="timelineSamples"></div>
+              <div class="timeline-knob" id="timelineKnob"></div>
+              <input type="range" id="timelineRange" min="0" max="35" step="0.001" value="0" aria-label="扫描行程时间轴" />
+            </div>
+            <div class="timeline-ticks"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span><span>35 mm</span></div>
+          </div>
+
+          <div class="transport-settings">
+            <label class="dock-select">
+              <span>观察速度</span>
+              <select id="dockObserve">
+                <option value="auto">自动</option>
+                <option value="0.05">0.05×</option>
+                <option value="0.10">0.10×</option>
+                <option value="0.20">0.20×</option>
+                <option value="0.50">0.50×</option>
+                <option value="1.00" selected>1.00×</option>
+              </select>
+            </label>
+            <div class="view-modes" role="group" aria-label="结构视图">
+              <button type="button" data-structure="exterior" class="is-active">外观</button>
+              <button type="button" data-structure="section">切面</button>
+              <button type="button" data-structure="exploded">爆炸</button>
+            </div>
+          </div>
+        </div>
+        <div class="dock-edge"><span></span><span></span><span></span></div>
+      </footer>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="loading-screen" id="loadingScreen">
+        <div class="loading-brand"><span>IN-SITU</span><em>MS-04</em></div>
+        <div class="loading-line"><i id="loadingProgress"></i></div>
+        <div class="loading-meta"><span id="loadingText">正在建立测量坐标系</span><span id="loadingPct">00</span></div>
+      </div>
+
+      <div class="fatal-screen" id="fatalScreen" hidden>
+        <div class="fatal-code">WEBGL / INTERRUPTED</div>
+        <h2>无法建立三维渲染上下文</h2>
+        <p>请使用支持 WebGL2 的新版 Chrome、Edge 或 Safari，并确认硬件加速已开启。</p>
+        <button class="btn" onclick="location.reload()">重新载入</button>
+      </div>
+
+      <div class="debug-panel" id="debugPanel" hidden>
+        <div class="debug-head"><span>DEBUG / D</span><b id="debugFps">-- FPS</b></div>
+        <dl>
+          <dt>draw calls</dt><dd id="debugCalls">--</dd>
+          <dt>triangles</dt><dd id="debugTris">--</dd>
+          <dt>s_display</dt><dd id="debugS">0.000 mm</dd>
+          <dt>α_display</dt><dd id="debugA">+22.45°</dd>
+          <dt>time scale</dt><dd id="debugScale">1.00×</dd>
+          <dt>magnify</dt><dd id="debugMag">500×</dd>
+          <dt>fsm</dt><dd id="debugFsm">IDLE</dd>
+        </dl>
+      </div>
+    </section>
+
+    <aside class="console" id="console">
+      <div class="console-head">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-dot cyan"></span><span>METROLOGY CONSOLE</span></div>
+          <h1>测量控制台<span class="console-index">02</span></h1>
+        </div>
+        <button type="button" class="cinema-btn chart-jump" id="chartJump" title="跳转到齿形误差曲线">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 14.5V10M7 14.5V6.5M11 14.5V9M15 14.5V4.5"/><path d="M3 4.5h12"/></svg>
+          <span>曲线</span>
+        </button>
+        <button type="button" class="cinema-btn" data-action="cinema" title="电影演示（约 27 秒）">
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5.5 4.2 13 9l-7.5 4.8V4.2Z"/></svg>
+          <span>电影演示</span>
+        </button>
+      </div>
+
+      <div class="console-scroll" id="consoleScroll">
+        <section class="status-card">
+          <div class="status-top">
+            <span class="live-state"><i></i><span id="fsmStatus">待机</span></span>
+            <span class="face-tag" id="faceTag">左齿面 <b>+22.45°</b></span>
+          </div>
+          <div class="master-readout">
+            <div class="readout-label">Y 轴扫描位移 <span>S</span></div>
+            <div class="readout-number"><span id="readS">0.000</span><em>mm</em></div>
+            <div class="readout-aside"><span>展开角 φ</span><b id="readPhi">0.000°</b></div>
+          </div>
+          <div class="readout-grid">
+            <div class="mini-readout">
+              <span>测头法向 δ<em>真实值</em></span>
+              <strong><b id="readDelta">0.0</b><small>μm</small></strong>
+            </div>
+            <div class="mini-readout">
+              <span>传感器端 3δ</span>
+              <strong><b id="read3d">0.0</b><small>μm</small></strong>
+            </div>
+            <div class="mini-readout amber">
+              <span>当前误差 e(s)</span>
+              <strong><b id="readErr">0.0</b><small>μm</small></strong>
+            </div>
+          </div>
+          <div class="status-foot">
+            <span>α <b id="readAlpha">+22.45°</b></span>
+            <span>Y pos <b id="readYPos">0.000 mm</b></span>
+            <span>STEP <b>1.5625 μm</b></span>
+          </div>
+        </section>
+
+        <section class="controls-section">
+          <div class="section-head">
+            <div><span class="section-no">01</span><h2>主控制</h2><em>PRIMARY</em></div>
+            <label class="signal-select">
+              <span>误差信号</span>
+              <select id="signalPreset" aria-label="误差信号预设">
+                <option value="pass">合格示例</option>
+                <option value="fail">超差示例</option>
+                <option value="random">随机示意</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="action-grid">
+            <button type="button" class="btn ghost" data-action="position">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="6" cy="12" r="2.2"/><circle cx="13" cy="7" r="2.2"/><path d="M7.7 10.4 11.3 8.6"/></svg>
+              双球定位
+            </button>
+            <button type="button" class="btn primary" data-action="play">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5.5 4.2 13 9l-7.5 4.8V4.2Z"/></svg>
+              <span class="action-label">启动测量</span>
+            </button>
+            <button type="button" class="btn" data-action="pause" title="暂停 / 继续">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6 4v10M12 4v10"/></svg>
+              <span class="action-label">暂停</span>
+            </button>
+            <button type="button" class="btn" data-action="reverse" title="回转至另一齿面">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4.5 9a4.5 4.5 0 0 1 7.8-3M13.5 9a4.5 4.5 0 0 1-7.8 3"/><path d="M12.6 3.4v2.9H9.7M5.4 14.6v-2.9h2.9"/></svg>
+              换向
+            </button>
+          </div>
+
+          <div class="face-control">
+            <span class="micro-label">FLANK / 齿面选择</span>
+            <div class="segmented" id="faceSegmented">
+              <button type="button" data-face="left" class="is-active">左齿面 +22.45°</button>
+              <button type="button" data-face="right">右齿面 −22.45°</button>
+            </div>
+            <button type="button" class="tiny-icon" data-action="reset" title="复位测量">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4.2 7.2A6 6 0 1 1 3.5 11M4.2 3.5v3.9h3.9"/></svg>
+            </button>
+          </div>
+
+          <div class="sliders">
+            <label class="range-field">
+              <div class="range-head"><span>扫描速度 <em>教学设定</em></span><output><b id="speedValue">2.0</b> mm/s</output></div>
+              <input type="range" id="scanSpeed" min="0.5" max="5" step="0.1" value="2" />
+            </label>
+            <label class="range-field">
+              <div class="range-head"><span>采样点数 <em>N</em></span><output><b id="samplesValue">60</b> pts</output></div>
+              <input type="range" id="sampleCount" min="20" max="120" step="1" value="60" />
+            </label>
+            <label class="range-field">
+              <div class="range-head"><span>观察倍率 <em id="observeModeLabel">自动</em></span><output><b id="observeValue">1.00</b> ×</output></div>
+              <div class="observe-row">
+                <div class="segmented compact" id="observeModes">
+                  <button type="button" data-observe="auto" class="is-active">自动</button>
+                  <button type="button" data-observe="manual">手动</button>
+                  <button type="button" data-observe="real">1×</button>
+                </div>
+                <input type="range" id="presentationScale" min="0.05" max="1" step="0.05" value="1" aria-label="观察倍率" />
+              </div>
+            </label>
+            <label class="range-field">
+              <div class="range-head"><span>位移视觉放大 <em>仅三维</em></span><output><b id="magnifyValue">500</b> ×</output></div>
+              <input type="range" id="magnify" min="100" max="2000" step="50" value="500" />
+            </label>
+          </div>
+
+          <div class="fine-controls">
+            <div class="fine-field">
+              <div class="range-head"><span>X 轴粗调</span><output><b id="coarseValue">34.0</b> mm</output></div>
+              <input type="range" id="coarseX" min="0" max="80" step="0.5" value="34" />
+            </div>
+            <div class="micrometer">
+              <span class="micro-label">M6 微分筒</span>
+              <div><button type="button" data-mic="-1">−</button><b id="micValue">0.00</b><em>mm</em><button type="button" data-mic="1">+</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="diag-section">
+          <div class="section-head">
+            <div><span class="section-no">02</span><h2>机械诊断</h2><em>DIAGNOSTICS</em></div>
+            <span class="check-badge"><i></i>5 / 5 校核满足</span>
+          </div>
+          <div class="diag-grid">
+            <div><span>单步位移</span><b>1.5625 <em>μm</em></b></div>
+            <div><span>电机转速</span><b><span id="readRpm">24.0</span> <em>RPM</em></b></div>
+            <div><span>导轨中点挠度</span><b>0.48 <em>/ 1.5 μm</em></b></div>
+            <div><span>测杆挠度</span><b>1.2 <em>/ 1.5 μm</em></b></div>
+            <div><span>丝杆 30N 变形</span><b>0.25 <em>/ 1.0 μm</em></b></div>
+            <div><span>换向重复性</span><b>≤ 2.0 <em>μm</em></b></div>
+            <div><span>当前换向角</span><b><span id="readAngle">+22.45</span><em>°</em></b></div>
+            <div><span>杠杆比</span><b>3 : 1</b></div>
+          </div>
+          <label class="range-field force-field">
+            <div class="range-head"><span>测头预紧力 <em>弹簧压缩可见</em></span><output><b id="forceValue">0.30</b> N</output></div>
+            <input type="range" id="probeForce" min="0.1" max="0.5" step="0.01" value="0.3" />
+          </label>
+        </section>
+
+        <section class="chart-section" id="chartSection">
+          <div class="section-head">
+            <div><span class="section-no">03</span><h2>齿形误差</h2><em>PROFILE</em></div>
+            <button type="button" class="axis-toggle" id="axisToggle">X：展开长度 s</button>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="profileChart" aria-label="齿形误差-展开长度曲线"></canvas>
+            <div class="chart-legend">
+              <span><i class="line-left"></i>左齿面</span>
+              <span><i class="line-right"></i>右齿面</span>
+              <span><i class="band"></i>±[ff]/2</span>
+            </div>
+          </div>
+          <div class="chart-result" id="chartResult">
+            <div class="result-state" data-tone="idle"><i></i><span>等待扫描数据</span></div>
+            <div class="ff-values">
+              <span>ff<sub>左</sub> <b id="ffLeft">—</b></span>
+              <span>ff<sub>右</sub> <b id="ffRight">—</b></span>
+              <span class="tol">[ff] <b>45 μm</b></span>
+            </div>
+          </div>
+          <p class="chart-note">逐点连线 · 当前点以琥珀光点标记 · 误差信号为教学示意</p>
+        </section>
+
+        <section class="source-section">
+          <div class="section-head">
+            <div><span class="section-no">04</span><h2>误差源贡献度</h2><em>RSS</em></div>
+            <span class="rss-badge">U = 9.6 μm <em>k=2</em></span>
+          </div>
+          <div class="source-bars">
+            <button type="button" data-source="positioning"><span>定位重复性</span><i><b style="--w:32%"></b></i><em>32%</em></button>
+            <button type="button" data-source="straightness"><span>导轨直线度</span><i><b style="--w:10%"></b></i><em>10%</em></button>
+            <button type="button" data-source="motion"><span>运动平稳性</span><i><b style="--w:6%"></b></i><em>6%</em></button>
+            <button type="button" data-source="others"><span>其余 7 项</span><i><b style="--w:52%"></b></i><em>52%</em></button>
+          </div>
+          <div class="rss-foot"><span>u<sub>c</sub> 6.5 μm</span><span>补偿后 u<sub>c</sub>′ 4.8 μm</span><span>裕度约 20%</span></div>
+        </section>
+
+        <section class="inspector" id="partInspector" hidden>
+          <div class="section-head">
+            <div><span class="section-no">05</span><h2>部件档案</h2><em>COMPONENT</em></div>
+            <button type="button" class="tiny-icon" id="inspectorClose" title="关闭">×</button>
+          </div>
+          <div class="inspector-body">
+            <div class="inspector-title"><span id="inspectorCode">—</span><h3 id="inspectorName">—</h3></div>
+            <p id="inspectorDesc">—</p>
+            <dl id="inspectorSpecs"></dl>
+          </div>
+        </section>
+
+        <details class="precision-details">
+          <summary><span>精度链与刚度校核</span><em>10 项误差源 · 5 项校核</em></summary>
+          <div class="precision-body">
+            <div class="precision-metrics">
+              <div><span>u<sub>c</sub></span><b>6.5 μm</b></div>
+              <div><span>u<sub>c</sub>′</span><b>4.8 μm</b></div>
+              <div><span>U (k=2)</span><b>9.6 μm</b></div>
+              <div><span>指标</span><b>≤ 12 μm</b></div>
+            </div>
+            <table class="error-table">
+              <thead><tr><th>误差源</th><th>u / μm</th><th>分布</th></tr></thead>
+              <tbody>
+                <tr><td>定位重复性</td><td>4.5</td><td>正态</td></tr>
+                <tr><td>导轨直线度</td><td>2.5</td><td>正态</td></tr>
+                <tr><td>运动平稳性</td><td>2.0</td><td>正态</td></tr>
+                <tr><td>导轨与传感器平行度</td><td>1.2</td><td>均匀</td></tr>
+                <tr><td>传动回差</td><td>0.8</td><td>均匀</td></tr>
+                <tr><td>换向定位误差</td><td>1.8</td><td>正态</td></tr>
+                <tr><td>误差传递线性度</td><td>0.8</td><td>均匀</td></tr>
+                <tr><td>测杆受力变形</td><td>1.2</td><td>正态</td></tr>
+                <tr><td>机构滞后</td><td>0.4</td><td>正态</td></tr>
+                <tr><td>温度变形</td><td>1.8</td><td>均匀</td></tr>
+              </tbody>
+            </table>
+            <div class="stiffness-list">
+              <div><span>Y 导轨中点挠度</span><b>0.48 / 1.5 μm</b><em>满足</em></div>
+              <div><span>测杆悬臂挠度</span><b>1.2 / 1.5 μm</b><em>满足</em></div>
+              <div><span>丝杆轴向变形 (30N)</span><b>0.25 / 1.0 μm</b><em>满足</em></div>
+              <div><span>悬臂端挠度 (3kg)</span><b>2.0 / 5.0 μm</b><em>满足</em></div>
+              <div><span>测头处静刚度</span><b>≥35 / ≥30 N/μm</b><em>满足</em></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="source-note">
+          <summary><span>数据来源与教学口径</span><em>展开备注</em></summary>
+          <div class="source-note-body">
+            <p><b>参数基准</b>：机械尺寸、公差与精度数据取自《测控专业综合课程设计指南》《任务书》《最终设计说明书》与机械子系统设计汇报 PPT。显示采用说明书口径 r<sub>b</sub> = 368.36 mm；端面精确式 (d/2)·cosα<sub>t</sub> ≈ 411.6 mm 仅作口径备注，动画统一使用 368.36 mm。</p>
+            <p><b>源数据不一致说明</b>：任务书同时给出齿圈外径 D = 4200 mm 及由 Z/mn/β 推导的 d ≈ 890.9 mm，两者无法由同一圆柱齿轮公式同时成立。本展陈按任务书要求的 Φ4200 mm 巨型齿圈建立视觉尺度；双球跨距 W = 258.88 mm、k = 11，齿形评价与误差链则按说明书测量口径呈现。局部齿槽配合为教学展示折中。</p>
+            <p><b>教学简化</b>：齿形误差信号为形态受控的教学示意，不是实测数据；扫描速度 0.5–5 mm/s 为教学设定；位移 ×100–×2000 只放大三维呈现，读数、曲线、电机转速均使用真实值；双球定位卡片中的 u = 4.5 μm 为误差预算分量，并非现场实测重复性；软件补偿链只显示结论，未做真实信号处理。</p>
+            <p><b>权威口径取舍</b>：定位球 D=16 mm；杠杆比 3:1；弹性膜片联轴器；钨钢测杆 E=600 GPa；底座 HT200、箱体 HT150；驱动采用步进电机 N85BYGH450A-04。其余冲突值仅记录，不参与模型或读数。</p>
+          </div>
+        </details>
+
+        <div class="edu-note">
+          <span>EDU / 教学示意</span>
+          <p>误差信号为教学示意 · 扫描速度为教学设定 · 位移按 <b id="eduMag">×500</b> 视觉放大呈现</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="modal" id="helpModal" hidden>
+    <div class="modal-backdrop" data-close="help"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-head">
+        <div><span class="eyebrow"><span class="eyebrow-dot cyan"></span><span>OPERATOR NOTES</span></span><h2 id="helpTitle">操作说明 / 快捷键</h2></div>
+        <button type="button" class="modal-close" data-close="help" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-lead">双球定基准，切线扫齿形。沿“定位 → 进给 → 扫描 → 退回 → 换向 → 完成”的连续测量链观察微米级误差的发生与传递。</p>
+        <div class="shortcut-grid">
+          <div><kbd>Space</kbd><span>播放 / 暂停</span></div>
+          <div><kbd>R</kbd><span>复位视角</span></div>
+          <div><kbd>C</kbd><span>切面视图</span></div>
+          <div><kbd>E</kbd><span>爆炸图</span></div>
+          <div><kbd>M</kbd><span>声音静音</span></div>
+          <div><kbd>1 – 5</kbd><span>五个镜头</span></div>
+          <div><kbd>D</kbd><span>调试读数</span></div>
+          <div><kbd>Esc</kbd><span>关闭浮层 / 退出视图</span></div>
+        </div>
+        <div class="help-columns">
+          <div>
+            <h3>观察方式</h3>
+            <p><b>时间观察倍率</b>只改变机构的教学播放速度；<b>位移视觉放大</b>只改变三维中对测球、杠杆与 LVDT 的微米级夸张，曲线、读数不随之改变。</p>
+            <p>拖动底部时间轴可在 0–35 mm 行程内检查任意位置，机构与采样点会依据当前位移重建，不会重复生成采样光点。</p>
+          </div>
+          <div>
+            <h3>部件选择</h3>
+            <p>点击测头、杠杆、簧片、丝杆、定位球、轴承等可查看权威参数。选中部件以冷青色细轮廓标出；点击空白处取消。</p>
+            <p>在“切面”中可看到测球–测杆–杠杆–单片簧–LVDT 的完整传递链；“爆炸”会暂停机构展示，退出后恢复进入前的运行状态与视角。</p>
+          </div>
+        </div>
+        <div class="help-callout">
+          <span>教学声明</span>
+          <p>齿形误差为教学示意信号；扫描速度 0.5–5 mm/s 为教学设定；位移视觉放大只作用于 3D。机械动画、电机转速、单步位移与读数遵循同一套权威参数。</p>
+        </div>
+        <div class="help-foot"><span>IN-SITU / MS-04</span><span>3D WEBGL · THREE.JS r187</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+</div>
+
+<script>
+(function bootstrapSafetyNet(){
+  var failed = false;
+  function fail(reason) {
+    if (failed) return;
+    failed = true;
+    var fatal = document.getElementById('fatalScreen');
+    var loading = document.getElementById('loadingScreen');
+    if (loading) loading.classList.add('is-done');
+    if (fatal) {
+      fatal.hidden = false;
+      var detail = fatal.querySelector('p');
+      if (detail && reason) detail.textContent = reason;
+    }
+  }
+  window.addEventListener('error', function (event) {
+    if (!window.__APP__ && event && (event.message || event.filename)) {
+      fail('三维资源加载或初始化失败：' + (event.message || event.filename) + '。请使用本地服务器打开本页。');
+    }
+  }, true);
+  setTimeout(function () {
+    if (!window.__APP__ && !failed) {
+      var p = document.getElementById('loadingPct');
+      var t = document.getElementById('loadingText');
+      if (t) t.textContent = '加载超时 · 请检查本地服务器与 WebGL2';
+      if (p) p.textContent = '!';
+    }
+  }, 30000);
+})();
+</script>
+<script type="module">
+//__APP__
+</script>
+</body>
+</html>
